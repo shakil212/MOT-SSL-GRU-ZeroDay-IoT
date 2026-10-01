@@ -4,6 +4,16 @@ University Machine Learning research demonstrator for zero-day IoT intrusion det
 
 **Current stage: UI demonstration. Model not connected.** Training is maintained separately in Google Colab in `ZeroDay_IoT_Final_Training.ipynb`; the notebook and trained exports have not been supplied. This app does not generate predictions, confidence values, classes, or evaluation metrics.
 
+## Cinematic UI preview
+
+This worktree contains the dark research interface: a cyan/amber visual system, a static research-system graphic, three-stage overview cards, session-only submission and inspection, a truthful pipeline panel, and research provenance cards. Prediction remains disabled.
+
+The main directory was used only as a read-only source for the initial application snapshot. No model, dataset, environment, credential, or Git metadata was copied into this preview.
+
+Reusable presentation components live in `src/ui/components.py`; `src/ui/theme.css` owns visual tokens and scoped styles. Native theme colors come from `.streamlit/config.toml` through `src/ui/styles.py`. No external fonts, JavaScript, or frontend dependencies were added.
+
+Inspection status distinguishes file receipt from readable text. Preprocessing, model execution, and prediction always remain pending. Filename extensions are descriptive metadata, not validated input formats.
+
 ## Run locally
 
 Development environment: Windows, Python 3.14.0. Runtime and test dependencies are pinned separately; a training framework is not needed.
@@ -11,10 +21,10 @@ Development environment: Windows, Python 3.14.0. Runtime and test dependencies a
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
-.\.venv\Scripts\python.exe -m streamlit run app.py --server.address 127.0.0.1
+.\.venv\Scripts\python.exe -m streamlit run app.py --server.address 127.0.0.1 --server.port 8502
 ```
 
-Open `http://localhost:8501`. For runtime-only installation, use `requirements.txt`. On macOS/Linux, substitute `.venv/bin/python` for the Windows interpreter path. Other operating systems have not been tested.
+Open `http://localhost:8502`. The stable application can remain on port 8501; run the command above from this preview workspace. For runtime-only installation, use `requirements.txt`. On macOS/Linux, substitute `.venv/bin/python` for the Windows interpreter path. Other operating systems have not been tested.
 
 The presentation configuration uses Streamlit's viewer toolbar mode. To restore developer controls locally, append `--client.toolbarMode developer` to the launch command. Restart an already-running server after configuration changes.
 
@@ -61,10 +71,12 @@ UI tests use [Streamlit's AppTest API](https://docs.streamlit.io/develop/api-ref
 
 Interaction tests also cover upload retention, replacement cancellation, same-name replacement, clearing, and isolation between sessions. Upload persistence follows [Streamlit's widget-state guidance](https://docs.streamlit.io/develop/concepts/architecture/widget-behavior): a separate session value holds the file independently of the temporary uploader widget.
 
-See [UI review and presentation guide](docs/ui-review.md) for the demonstration timing and outstanding browser checks.
+All 24 automated checks pass in the redesign worktree. Browser-based visual verification remains pending because the browser connector and Windows computer-use helper were unavailable during implementation. See [UI review and presentation guide](docs/ui-review.md) for verified checks, outstanding viewport/accessibility checks, and presentation timing.
 
 ## Version control
 
-Git is initialized. `.gitignore` excludes environments, caches, credentials, local data, model bundles, checkpoints, and temporary outputs. Artifact/data READMEs remain tracked. Review and sanitize any notebook or sample before committing. Keep model binaries in approved external storage or evaluate Git LFS when actual exports exist.
+The adjacent stable project is committed as `302b615` (`Baseline stable Streamlit UI before cinematic redesign`). Its working tree was verified clean after implementation. Redesign files remain uncommitted in this dedicated preview worktree.
+
+`.gitignore` excludes environments, caches, credentials, local data, model bundles, checkpoints, and temporary outputs. Artifact/data guidance READMEs are retained. Review and sanitize any notebook or sample before committing. Keep model binaries in approved external storage or evaluate Git LFS when actual exports exist.
 
 Requirements pin direct dependencies, not the full transitive environment. Review dependency changes in Git and rerun checks when upgrading. Add model-framework dependencies only after verifying compatibility with Colab exports.

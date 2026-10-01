@@ -1,4 +1,5 @@
 from pathlib import Path
+from html.parser import HTMLParser
 
 import pytest
 from streamlit.testing.v1 import AppTest
@@ -33,7 +34,7 @@ def test_app_launches_and_navigation_keeps_inference_disabled():
     app.sidebar.radio[0].set_value("Data submission").run()
     assert not app.exception
     assert any("No file selected" in item.value for item in app.info)
-    assert app.button[0].disabled
+    assert button(app, "Run prediction").disabled
     assert any("Model not connected" in item.value for item in app.info)
     assert not app.warning
     app.sidebar.radio[0].set_value("Research notes").run()
@@ -140,4 +141,84 @@ def test_long_filename_and_many_lines_keep_a_bounded_preview():
     assert app.text[0].value == filename
     assert len(app.code[0].value.encode()) <= PREVIEW_BYTES
     assert any("first 8 KiB" in item.value for item in app.markdown)
+    assert button(app, "Run prediction").disabled
+
+
+class PipelineReader(HTMLParser):
+    """Read displayed stage labels without asserting decoration or CSS classes."""
+
+    def __init__(self):
+        super().__init__()
+        self.stages = {}
+        self.tag = None
+        self.stage = ""
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"strong", "small"}:
+            self.tag = tag
+
+    def handle_endtag(self, tag):
+        if tag == self.tag:
+            self.tag = None
+
+    def handle_data(self, data):
+        if self.tag == "strong":
+            self.stage = data
+        elif self.tag == "small":
+            self.stages[self.stage] = data
+
+
+def displayed_pipeline(app):
+    markup = next(item.value for item in app.markdown if 'aria-label="Pipeline status"' in item.value)
+    reader = PipelineReader()
+    reader.feed(markup)
+    return reader.stages
+
+
+@pytest.mark.parametrize("content, expected", [
+    (None, "Awaiting file"),
+    (b"readable preview", "Preview available"),
+    (b" \n\t", "No visible text"),
+    (b"", "Preview unavailable"),
+    (b"\xff", "Preview unavailable"),
+    (b"a\x00b", "Preview unavailable"),
+    (b"line\n" * 2000, "Preview available"),
+], ids=["no-file", "readable", "whitespace", "empty", "unreadable", "binary", "truncated"])
+def test_pipeline_reports_inspection_without_activating_inference(content, expected):
+    app = AppTest.from_file(str(APP)).run()
+    button(app, "Open data submission").click().run()
+    if content is not None:
+        app.file_uploader[0].upload("inspection.txt", content).run()
+    assert not app.exception
+    assert displayed_pipeline(app) == {
+        "Input": "Awaiting file" if content is None else "File received",
+        "Inspection": expected,
+        "Preprocessing": "Pending integration",
+        "Model": "Model not connected",
+        "Prediction": "Locked",
+    }
+    assert button(app, "Run prediction").disabled
+    assert not app.metric
+    if content is not None and len(content) > PREVIEW_BYTES:
+        assert any("first 8 KiB" in item.value for item in app.caption)
+        assert len(app.code[0].value.encode()) <= PREVIEW_BYTES
+
+
+def test_pipeline_follows_replacement_cancel_and_clear():
+    app = AppTest.from_file(str(APP)).run()
+    button(app, "Open data submission").click().run()
+    app.file_uploader[0].upload("same.txt", b"readable").run()
+    button(app, "Replace file").click().run()
+    assert displayed_pipeline(app)["Inspection"] == "Preview available"
+    button(app, "Cancel replacement").click().run()
+    assert displayed_pipeline(app)["Inspection"] == "Preview available"
+    button(app, "Replace file").click().run()
+    app.file_uploader[0].upload("same.txt", b"\xff").run()
+    assert displayed_pipeline(app)["Inspection"] == "Preview unavailable"
+    app.sidebar.radio[0].set_value("Research notes").run()
+    app.sidebar.radio[0].set_value("Data submission").run()
+    assert displayed_pipeline(app)["Inspection"] == "Preview unavailable"
+    button(app, "Clear file").click().run()
+    assert displayed_pipeline(app)["Input"] == "Awaiting file"
+    assert displayed_pipeline(app)["Inspection"] == "Awaiting file"
     assert button(app, "Run prediction").disabled

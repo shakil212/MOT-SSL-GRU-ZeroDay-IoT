@@ -1,11 +1,25 @@
 [theme]
-base = "light"
-primaryColor = "#0F766E"
-backgroundColor = "#F8FAFC"
-secondaryBackgroundColor = "#EEF2F6"
-textColor = "#172B40"
+base = "dark"
+primaryColor = "#45D6D0"
+backgroundColor = "#070B12"
+secondaryBackgroundColor = "#111D2D"
+textColor = "#EDF4FC"
 font = "sans serif"
-headingFontSizes = ["2.75rem", "1.4rem", "1.15rem", "1rem", "1rem", "1rem"]
+baseFontSize = 16
+headingFontSizes = ["3.25rem", "1.5rem", "1.2rem", "1rem", "1rem", "1rem"]
+headingFontWeights = [650, 600, 600, 600, 600, 600]
+baseRadius = "1rem"
+buttonRadius = "0.625rem"
+borderColor = "#29394C"
+showWidgetBorder = true
+showSidebarBorder = true
+codeFontSize = "0.9rem"
+
+[theme.sidebar]
+backgroundColor = "#0C1422"
+secondaryBackgroundColor = "#111D2D"
+textColor = "#EDF4FC"
+primaryColor = "#45D6D0"
 
 [client]
 toolbarMode = "viewer"
